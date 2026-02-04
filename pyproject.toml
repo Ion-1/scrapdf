@@ -1,0 +1,10 @@
+[project]
+name = "screenshots2pdf"
+version = "0.1.0"
+description = "Screenshot URLs and compile to a PDF"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "playwright>=1.58.0",
+    "pyside6>=6.10.2",
+]
