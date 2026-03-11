@@ -1,10 +1,27 @@
 [project]
-name = "screenshots2pdf"
-version = "0.1.0"
+name = "scrapdf"
+version = "0.0.1"
 description = "Screenshot URLs and compile to a PDF"
 readme = "README.md"
+license = "LGPLv3"
 requires-python = ">=3.14"
 dependencies = [
+    "fastexcel[polars]>=0.19.0",
+    "pikepdf>=10.3.0",
+    "pillow>=12.1.1",
     "playwright>=1.58.0",
+    "polars>=1.38.0",
     "pyside6>=6.10.2",
+    "qtawesome>=1.4.1",
+    "reportlab>=4.4.10",
+    "rust-enum",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.0",
+    "ty>=0.0.14",
+]
+
+[tool.uv.sources]
+rust-enum = { git = "https://github.com/Ion-1/rust_enum" }

@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
-    <option name="sdkName" value="uv (screenshots2pdf)" />
+    <option name="sdkName" value="uv (scrapdf)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="uv (screenshots2pdf)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="uv (scrapdf)" project-jdk-type="Python SDK" />
   <component name="PythonCompatibilityInspectionAdvertiser">
     <option name="version" value="3" />
+  </component>
+  <component name="RuffConfiguration">
+    <option name="enabled" value="true" />
+  </component>
+  <component name="TyConfiguration">
+    <option name="enabled" value="true" />
   </component>
 </project>
