@@ -2,7 +2,7 @@
 GUI for screenshotting URLs from your spreadsheet and compiling them into a PDF.
 
 > [!NOTE]
-> AI Usage: LLM was used for brute-forcing some of the layout stuff and the usual autocomplete that PyCharm provides.
+> AI Usage: LLMs were used for brute-forcing some of the layout stuff and the usual autocomplete that PyCharm provides.
 
 ## Usage
 The program currently works in its most basic form.
