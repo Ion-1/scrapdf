@@ -1,0 +1,14 @@
+{
+  "policies": {
+    "ExtensionSettings": {
+      "gdpr@cavi.au.dk": {
+        "installation_mode": "force_installed",
+        "install_url": "%LOCAL_DATA_DIR_URI%/firefox/extensions/consent_o_matic-1.1.5.xpi"
+      },
+      "uBlock0@raymondhill.net": {
+        "installation_mode": "force_installed",
+        "install_url": "%LOCAL_DATA_DIR_URI%/firefox/extensions/ublock_origin-1.69.0.xpi"
+      }
+    }
+  }
+}
