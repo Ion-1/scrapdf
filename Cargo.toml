@@ -4,3 +4,4 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+qtbridge = { git = "https://github.com/qt/qtbridge-rust.git", version = "0.1.5" }
