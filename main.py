@@ -155,9 +155,10 @@ class FileSelectionWidget(QWidget):
 
 
 class PolarsTableModel(QAbstractTableModel):
-    def __init__(self, df: pl.DataFrame):
+    def __init__(self, df: pl.DataFrame, name: str):
         super().__init__()
         self._df = df
+        self.name = name
 
     def rowCount(self, parent=QModelIndex()):
         return self._df.height
@@ -199,7 +200,7 @@ class SpreadsheetInfoWidget(QWidget):
 
         for sheet_name, sheet_df in df.items():
             table = QTableView()
-            model = PolarsTableModel(sheet_df)
+            model = PolarsTableModel(sheet_df, sheet_name)
             table.setModel(model)
             table.selectionModel().selectionChanged.connect(self._on_selection_changed)
 
@@ -228,15 +229,23 @@ class SpreadsheetInfoWidget(QWidget):
 
     def _on_next_clicked(self):
         selected_items = []
+        selected_tab_names = []
 
         for table in self.tables:
             model = table.model()
-            for index in table.selectionModel().selectedIndexes():
+            if not (indexes := table.selectionModel().selectedIndexes()):
+                continue
+            selected_tab_names.append(model.name)
+            for index in indexes:
                 selected_items.append(model.data(index))
 
         if not selected_items:
             QErrorMessage(self).showMessage("No items selected")
             return
+
+        # For future widget
+        self.all_tabs = len(selected_tab_names) == len(self.tables)
+        self.selected_tabs = selected_tab_names
 
         self.window().stack.insertWidget(2, ListURLWidget(selected_items))
         self.window().stack.setCurrentIndex(2)
@@ -509,7 +518,10 @@ class Runner(QObject):
                 user_data_dir=self.user_data_dir,
                 headless=False,
                 viewport={"width": 1920, "height": 1080},
-                slow_mo=250,
+                slow_mo=300,
+                firefox_user_prefs={
+                    "media.volume_scale": "0.0",
+                }
             )
             for url in urls:
                 ret_list.append(
@@ -538,6 +550,27 @@ class Runner(QObject):
             page.close()
             self.add_signal.emit()
             return response  # ty:ignore[invalid-return-type]
+
+        self.thread().msleep(1000)
+
+        if "instagram.com" in url:
+            page.get_by_role("button", name="close").click()
+            self.thread().msleep(500)
+
+        if "youtube.com" in url or "youtu.be" in url:
+            self.thread().msleep(4000)
+
+        if "linkedin.com/posts" in url:
+            page.get_by_role("button", name="dismiss").click()
+            self.thread().msleep(500)
+
+        if "facebook.com" in url and ("groups" in url or "videos" in url or "reel" in url):
+            page.get_by_role("button", name="close").click()
+            self.thread().msleep(500)
+
+        if "tiktok.com" in url:
+            self.thread().msleep(2000)
+
         page.screenshot(
             path=(pth := self.save_dir / Path(f"{time.time_ns()}.jpeg")),
             type="jpeg",
@@ -1328,9 +1361,14 @@ class FinalScreen(QWidget):
 
     def _on_save_clicked(self):
         original = self.window().stack.widget(0).path_fname
+        all_tabs = self.window().stack.widget(1).all_tabs
+        selected_tabs = self.window().stack.widget(1).selected_tabs
+
+        pdf_name = original.with_suffix("").name + "_".join([""] + selected_tabs if not all_tabs else []) + ".pdf"
+
         dialog = QFileDialog(self)
         dialog.setDefaultSuffix("pdf")
-        dialog.selectFile(original.with_suffix(".pdf").name)
+        dialog.selectFile(pdf_name)
         dialog.setDirectory(str(original.parent))
         dialog.setNameFilter("PDF (*.pdf)")
         dialog.setFileMode(QFileDialog.FileMode.AnyFile)

@@ -9,6 +9,32 @@
         "installation_mode": "force_installed",
         "install_url": "%LOCAL_DATA_DIR_URI%/firefox/extensions/ublock_origin-1.69.0.xpi"
       }
+    },
+
+    "3rdparty": {
+      "Extensions": {
+        "uBlock0@raymondhill.net": {
+          "toOverwrite": {
+            "filterLists": [
+              "user-filters",
+              "ublock-filters",
+              "ublock-badware",
+              "ublock-privacy",
+              "ublock-quick-fixes",
+              "ublock-unbreak",
+              "easylist",
+              "easyprivacy",
+              "urlhaus-1",
+              "plowe-0",
+              "adguard-cookies",
+              "ublock-cookies-adguard",
+              "fanboy-cookiemonster",
+              "ublock-cookies-easylist",
+              "adguard-popup-overlays"
+            ]
+          }
+        }
+      }
     }
   }
 }
