@@ -7,6 +7,7 @@ import time
 import shutil
 import atexit
 import datetime
+import traceback
 import dataclasses
 
 import polars as pl
@@ -553,29 +554,67 @@ class Runner(QObject):
 
         self.thread().msleep(1000)
 
-        if "instagram.com" in url:
-            page.get_by_role("button", name="close").click()
-            self.thread().msleep(500)
+        try:
+            if page.get_by_text("Performing security verification").is_visible():
+                self.thread().msleep(1000)
+                page.get_by_text("Verifying").wait_for(timeout=30_000, state="hidden")
 
-        if "youtube.com" in url or "youtu.be" in url:
-            self.thread().msleep(4000)
+            if (cf_locator := page.get_by_label("Verify you are human")).is_visible():
+                page.bring_to_front()
+                cf_locator.wait_for(timeout=180_000, state="hidden")
 
-        if "linkedin.com/posts" in url:
-            page.get_by_role("button", name="dismiss").click()
-            self.thread().msleep(500)
+            if "instagram.com" in url:
+                self.thread().msleep(500)
+                page.get_by_role("button", name="Close").click()
+                self.thread().msleep(500)
 
-        if "facebook.com" in url and ("groups" in url or "videos" in url or "reel" in url):
-            page.get_by_role("button", name="close").click()
-            self.thread().msleep(500)
+            if "youtube.com" in url or "youtu.be" in url:
+                self.thread().msleep(4000)
 
-        if "tiktok.com" in url:
-            self.thread().msleep(2000)
+            if "linkedin.com/posts" in url:
+                self.thread().msleep(500)
+                page.get_by_role("button", name="Dismiss").click()
+                self.thread().msleep(500)
 
-        page.screenshot(
-            path=(pth := self.save_dir / Path(f"{time.time_ns()}.jpeg")),
-            type="jpeg",
-            quality=70,
-        )
+            if "facebook.com" in url and ("groups" in url or "videos" in url or "reel" in url or "posts" in url or "watch" in url):
+                self.thread().msleep(500)
+                page.get_by_role("button", name="Close").click()
+                self.thread().msleep(500)
+
+            if "tiktok.com" in url:
+                self.thread().msleep(6000)
+
+            if "newsbreak.com" in url:
+                self.thread().msleep(500)
+                page.get_by_role("button", name="Skip for Now").click()
+                self.thread().msleep(500)
+
+            if "eteknix.com" in url:
+                self.thread().msleep(1000)
+
+            if "x.com" in url:
+                self.thread().msleep(1000)
+
+            if "cdrinfo.com" in url:
+                self.thread().msleep(1000)
+
+            if "msn.com" in url:
+                self.thread().msleep(1000)
+        except Exception:
+            traceback.print_exc()
+
+        try:
+            page.screenshot(
+                path=(pth := self.save_dir / Path(f"{time.time_ns()}.jpeg")),
+                type="jpeg",
+                quality=70,
+            )
+        except Exception as e:
+            traceback.print_exc()
+            page.close()
+            self.add_signal.emit()
+            return Result.Err(FailureReason.Unknown(exc=e))
+
         page.close()
         self.add_signal.emit()
         return Result.Ok(pth)
