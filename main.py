@@ -18,6 +18,7 @@ import playwright.async_api as paa
 import PySide6.QtAsyncio as QtAsyncio
 
 from pathlib import Path
+from threading import Event
 from typing import cast, overload, TypedDict
 
 from PIL import Image
@@ -506,9 +507,11 @@ class Runner(QObject):
 
         self.user_data_dir = user_data_dir
         self.save_dir = save_dir
+        self._running = Event()
+        self._running.set()
 
     @Slot(list, QThread)
-    def grab_images(self, urls: list[str], receiver_thread: QThread) -> None:
+    def grab_images(self, urls: list[str], receiver_thread: QThread, set_running: bool = True) -> None:
         ret_list: list[ScreenshotObject] = []
         if os.environ.get("PLAYWRIGHT_FIREFOX_POLICIES_JSON") is None:
             os.environ["PLAYWRIGHT_FIREFOX_POLICIES_JSON"] = str(
@@ -524,7 +527,24 @@ class Runner(QObject):
                     "media.volume_scale": "0.0",
                 }
             )
+
+            if set_running:
+                self._running.set()
+
             for url in urls:
+                self._running.wait()
+
+                if browser.is_closed():
+                    browser = p.firefox.launch_persistent_context(
+                        user_data_dir=self.user_data_dir,
+                        headless=False,
+                        viewport={"width": 1920, "height": 1080},
+                        slow_mo=300,
+                        firefox_user_prefs={
+                            "media.volume_scale": "0.0",
+                        }
+                    )
+
                 ret_list.append(
                     ScreenshotObject(
                         url,
@@ -532,6 +552,7 @@ class Runner(QObject):
                         retry=inner.is_err(),
                     )
                 )
+
         for obj in ret_list:
             obj.moveToThread(receiver_thread)
         # Move ourselves back to the receiver (main) thread while we're
@@ -611,7 +632,10 @@ class Runner(QObject):
             )
         except Exception as e:
             traceback.print_exc()
-            page.close()
+            try:
+                page.close()
+            except Exception:
+                pass
             self.add_signal.emit()
             return Result.Err(FailureReason.Unknown(exc=e))
 
@@ -651,6 +675,12 @@ class Runner(QObject):
         if response.status == 500:
             return Result.Err(FailureReason.InternalServerError(exc=None))
         return Result.Ok(response)
+
+    def pause(self):
+        self._running.clear()
+
+    def resume(self):
+        self._running.set()
 
 
 class GrabbingImagesWidget(QWidget):
@@ -719,8 +749,26 @@ class GrabbingImagesWidget(QWidget):
         self.buttons_layout.addWidget(self.back_button)
         self.back_button.clicked.connect(self._on_back_clicked)
 
+        self.pause_button = QPushButton()
+        self.pause_button.setCheckable(True)
+        self.pause_button.setIcon(self.pause_button.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+        self.pause_button.setToolTip("Pause")
+        self.pause_button.toggled.connect(self.on_pause_toggled)
+        self.buttons_layout.addWidget(self.pause_button)
+
         self.worker_thread.start()
         self.operate_worker.emit(work_urls, self.thread())
+
+    @Slot(bool)
+    def on_pause_toggled(self, paused: bool):
+        if paused:
+            self.runner.pause()
+            self.pause_button.setIcon(self.pause_button.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+            self.pause_button.setToolTip("Resume")
+        else:
+            self.runner.resume()
+            self.pause_button.setIcon(self.pause_button.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
+            self.pause_button.setToolTip("Pause")
 
     def closeEvent(self, event, /):
         self.worker_thread.quit()
