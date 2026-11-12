@@ -751,7 +751,7 @@ class GrabbingImagesWidget(QWidget):
 
         self.pause_button = QPushButton()
         self.pause_button.setCheckable(True)
-        self.pause_button.setIcon(self.pause_button.style().standardIcon(QStyle.StandardPixmap.SP_MediaPlay))
+        self.pause_button.setIcon(self.pause_button.style().standardIcon(QStyle.StandardPixmap.SP_MediaPause))
         self.pause_button.setToolTip("Pause")
         self.pause_button.toggled.connect(self.on_pause_toggled)
         self.buttons_layout.addWidget(self.pause_button)
